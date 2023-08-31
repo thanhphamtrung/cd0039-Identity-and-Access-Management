@@ -88,7 +88,7 @@ def check_permissions(permission, payload):
 
 
 '''
-@DONE implement verify_decode_jwt(token) method
+@TODO implement verify_decode_jwt(token) method
     @INPUTS
         token: a json web token (string)
 
@@ -101,17 +101,12 @@ def check_permissions(permission, payload):
     !!NOTE urlopen has a common certificate error described here: https://stackoverflow.com/questions/50236117/scraping-ssl-certificate-verify-failed-error-for-http-en-wikipedia-org
 '''
 def verify_decode_jwt(token):
-    json_url = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
-    jwks_data = json.loads(json_url.read())
+    jsonurl = urlopen('https://' + AUTH0_DOMAIN + '/.well-known/jwks.json')
+    jwks_data = json.loads(jsonurl.read())
+    
     unverified_header = jwt.get_unverified_header(token)
     rsa_key = {}
-
-    if 'kid' not in unverified_header:
-        raise AuthError({
-            'code': 'invalid_header',
-            'description': 'Authorization malformed.'
-        }, 401)
-
+    
     for key in jwks_data['keys']:
         if key['kid'] == unverified_header['kid']:
             rsa_key = {
@@ -121,25 +116,18 @@ def verify_decode_jwt(token):
                 'n': key['n'],
                 'e': key['e']
             }
-
+    
     try:
         payload = jwt.decode(
             token,
             rsa_key,
             algorithms=ALGORITHMS,
             audience=API_AUDIENCE,
-            issuer=f'https://{AUTH0_DOMAIN}/',
-            options={
-                'verify_signature': True,
-                'verify_aud': True,
-                'verify_iat': True,
-                'verify_exp': True,
-                'verify_nbf': True
-            }
+            issuer='https://' + AUTH0_DOMAIN + '/'
         )
-
+       
         return payload
-
+    
     except jwt.ExpiredSignatureError:
         raise AuthError({
             'code': 'token_expired',
